@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Role } from "../../../../domain/enums/role.enum";
 
 export interface CreateUserRequest {
