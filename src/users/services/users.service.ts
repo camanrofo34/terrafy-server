@@ -37,6 +37,8 @@ export class UsersService{
             throw new ConflictException("Email is already in use");
         }
 
+        await this.checkPasswordStrength(payload.password);
+
         const newPassword = await this.bcryptService.hashPassword(payload.password);
 
         const newUser = this.userRepository.create({
@@ -82,7 +84,15 @@ export class UsersService{
             throw new BadRequestException("User account is not active");
         }
 
+        if (payload.email && payload.email !== existingUser.email) {
+            const emailInUse = await this.getUserByEmail(payload.email);
+            if (emailInUse) {
+                throw new ConflictException("Email is already in use");
+            }
+        }
+
         if (payload.password) {
+            await this.checkPasswordStrength(payload.password);
             payload.password = await this.bcryptService.hashPassword(payload.password);
         }
 
@@ -108,5 +118,12 @@ export class UsersService{
 
         this.userRepository.merge(existingUser, { status: Status.INACTIVE });
         await this.userRepository.save(existingUser);
+    }
+
+    private async checkPasswordStrength(password: string): Promise<void> {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            throw new BadRequestException("Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character");
+        }
     }
 }

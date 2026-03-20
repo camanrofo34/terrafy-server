@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import type { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
 import { ApiBearerAuth, ApiBody, ApiOperation } from "@nestjs/swagger";
 import { GrowingSystemService } from "../services/growing_system.service";
@@ -44,8 +44,15 @@ export class GrowingSystemController {
         summary: "Get growing systems for a user",
         description: "Retrieves all growing systems associated with a specific user."
     })
-    getGrowingSystemsByUserId(@Param('userId') userId: number) {
-        return this.growingSystemService.getGrowingSystemsByUserId(userId);
+    getGrowingSystemsByUserId(
+        @Param('userId') userId: number,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10,
+        @Query('query') query?: string,
+        @Query('sortBy') sortBy: string = 'creationDate',
+        @Query('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC'
+    ) {
+        return this.growingSystemService.getGrowingSystemsByUserId(userId, page, limit, query, sortBy, sortOrder);
     }
 
     @Patch(':systemId')

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GrowingSystem } from "../../domain/entities";
-import { Repository } from "typeorm";
+import { Like, Repository } from "typeorm";
 import { UsersService } from "../../users/services/users.service";
 import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
 import { Status } from "../../domain/enums/status.enum";
@@ -47,12 +47,35 @@ export class GrowingSystemService {
         };
     }
 
-    async getGrowingSystemsByUserId(userId: number): Promise<PublicGrowingSystem[]> {
-        const systems = await this.growingSystemRepository.find({
-            where: { user: { userId } },
-            relations: ['user']
+    async getGrowingSystemsByUserId(userId: number, page: number = 1, limit: number = 10, query?: string, sortBy: string = 'creationDate', sortOrder: 'ASC' | 'DESC' = 'DESC'): 
+    Promise<{
+        systems: PublicGrowingSystem[], total: number, page: number, lastPage: number
+    }> {
+        const [systems, total] = await this.growingSystemRepository.findAndCount({
+            where: query
+            ? [
+                {
+                    user: { userId },
+                    status: Status.ACTIVE,
+                    name: Like(`%${query}%`)
+                },
+                {
+                    user: { userId },
+                    status: Status.ACTIVE,
+                    description: Like(`%${query}%`)
+                }
+                ]
+            : {
+                user: { userId },
+                status: Status.ACTIVE
+                },
+            relations: ['user'],
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { [sortBy]: sortOrder }
         });
-        return systems.map(system => ({
+
+        const data = systems.map(system => ({
             systemId: system.systemId,
             name: system.name,
             ubication: system.ubication,
@@ -60,8 +83,14 @@ export class GrowingSystemService {
             status: system.status,
             creationDate: system.creationDate,
             updateDate: system.updateDate,
-        })
-        );
+        }));
+
+        return {
+            systems: data,
+            total,
+            page,
+            lastPage: Math.ceil(total / limit),
+        };
     }
 
     async updateGrowingSystem(systemId: number, payload: UpdateGrowingSystemRequest): Promise<PublicGrowingSystem> {

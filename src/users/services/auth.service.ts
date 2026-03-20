@@ -21,16 +21,12 @@ export class AuthService {
   async login(payload: LoginRequest): Promise<LoginResponse> {
     const user = await this.usersService.getUserByEmail(payload.email);
 
-    if (!user) {
+    if (!user || !await this.bcryptService.comparePasswords(payload.password, user.password)) {
       throw new UnauthorizedException("Invalid email or password");
     }
 
     if (user.status !== Status.ACTIVE) {
       throw new BadRequestException("User account is not active");
-    }
-
-    if (!await this.bcryptService.comparePasswords(payload.password, user.password)) {
-      throw new UnauthorizedException("Invalid email or password");
     }
 
     const token = await this.generateToken(user.userId, user.email);
