@@ -110,25 +110,25 @@ export class ApiCenterService {
     return this.toPublicUser(user);
   }
 
-  async createGrowingSystem(payload: CreateGrowingSystemDto): Promise<GrowingSystem> {
-    const user = await this.usersRepository.findOne({
-      where: { userId: payload.userId },
-    });
+  // async createGrowingSystem(payload: CreateGrowingSystemDto): Promise<GrowingSystem> {
+  //   const user = await this.usersRepository.findOne({
+  //     where: { userId: payload.userId },
+  //   });
 
-    if (!user) {
-      throw new NotFoundException(`User ${payload.userId} not found`);
-    }
+  //   if (!user) {
+  //     throw new NotFoundException(`User ${payload.userId} not found`);
+  //   }
 
-    const system = this.systemsRepository.create({
-      userId: payload.userId,
-      name: payload.name,
-      ubication: payload.location,
-      description: payload.description,
-      status: Status.ACTIVE,
-    });
+  //   const system = this.systemsRepository.create({
+  //     userId: payload.userId,
+  //     name: payload.name,
+  //     ubication: payload.location,
+  //     description: payload.description,
+  //     status: Status.ACTIVE,
+  //   });
 
-    return this.systemsRepository.save(system);
-  }
+  //   return this.systemsRepository.save(system);
+  // }
 
   async getGrowingSystems(): Promise<GrowingSystem[]> {
     return this.systemsRepository

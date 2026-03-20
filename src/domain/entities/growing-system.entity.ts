@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -14,13 +15,10 @@ import { SystemVariable } from './system-variable.entity';
 import { User } from './user.entity';
 
 @Entity({ name: 'growing_system' })
-@Index('ix_growing_systems_user_id', ['userId'])
+@Index('ix_growing_systems_user_id', ['user'])
 export class GrowingSystem {
   @PrimaryGeneratedColumn({ name: 'system_id' })
   systemId: number;
-
-  @Column({ name: 'user_id' })
-  userId: number;
 
   @Column({ type: 'varchar', length: 120 })
   name: string;
@@ -50,6 +48,7 @@ export class GrowingSystem {
     nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @OneToMany(() => IoTDevice, (device) => device.system, {

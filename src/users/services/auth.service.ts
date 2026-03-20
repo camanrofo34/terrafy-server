@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -6,9 +7,9 @@ import {
 import { UsersService } from "./users.service";
 import { LoginRequest } from "../model/dto/request/loginRequest.types";
 import { LoginResponse } from "../../api-center/api-center.types";
-import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { BcryptService } from "./bcrypt.service";
+import { Status } from "../../domain/enums/status.enum";
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException("Invalid email or password");
+    }
+
+    if (user.status !== Status.ACTIVE) {
+      throw new BadRequestException("User account is not active");
     }
 
     if (!await this.bcryptService.comparePasswords(payload.password, user.password)) {

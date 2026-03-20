@@ -36,10 +36,10 @@ export class ApiCenterController {
     return this.apiCenterService.getUser(userId);
   }
 
-  @Post('growing-systems')
-  createGrowingSystem(@Body() payload: CreateGrowingSystemDto) {
-    return this.apiCenterService.createGrowingSystem(payload);
-  }
+  // @Post('growing-systems')
+  // createGrowingSystem(@Body() payload: CreateGrowingSystemDto) {
+  //   return this.apiCenterService.createGrowingSystem(payload);
+  // }
 
   @Get('growing-systems')
   getGrowingSystems() {

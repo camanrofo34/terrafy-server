@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ApiCenterController } from './api-center/api-center.controller';
 import { ApiCenterService } from './api-center/api-center.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,6 +19,8 @@ import { UsersController } from './users/controller/users.controller';
 import { UsersService } from './users/services/users.service';
 import { AuthService } from './users/services/auth.service';
 import { BcryptService } from './users/services/bcrypt.service';
+import { GrowingSystemController } from './growingSystem/controller/growing_system.controller';
+import { GrowingSystemService } from './growingSystem/services/growing_system.service';
 
 @Module({
   imports: [
@@ -61,7 +62,7 @@ import { BcryptService } from './users/services/bcrypt.service';
       Alert,
     ]),
   ],
-  controllers: [AppController, UsersController],
-  providers: [AppService, ApiCenterService, UsersService, AuthService, BcryptService],
+  controllers: [UsersController, GrowingSystemController],
+  providers: [ApiCenterService, UsersService, AuthService, BcryptService, GrowingSystemService],
 })
 export class AppModule {}

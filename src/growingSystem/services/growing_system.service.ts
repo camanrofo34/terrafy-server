@@ -1,0 +1,105 @@
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { GrowingSystem } from "../../domain/entities";
+import { Repository } from "typeorm";
+import { UsersService } from "../../users/services/users.service";
+import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
+import { Status } from "../../domain/enums/status.enum";
+import { PublicGrowingSystem } from "../model/public/PublicGrowingSystem.types";
+import { UpdateGrowingSystemRequest } from "../model/dto/request/UpdateGrowingSystemRequest.types";
+
+@Injectable()
+export class GrowingSystemService {
+    constructor(
+        @InjectRepository(GrowingSystem)
+        private readonly growingSystemRepository: Repository<GrowingSystem>,
+        private readonly userService: UsersService
+    ){}
+
+    async createGrowingSystem(payload: CreateGrowingSystemRequest): Promise<PublicGrowingSystem> {
+        const user = await this.userService.getUserById(payload.userId);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const newSystem = this.growingSystemRepository.create({
+            user: user,
+            name: payload.name,
+            description: payload.description,
+            ubication: payload.location,
+            status: Status.ACTIVE
+        });
+
+        const savedSystem = await this.growingSystemRepository.save(newSystem);
+        return {
+            systemId: savedSystem.systemId,
+            name: savedSystem.name,
+            ubication: savedSystem.ubication,
+            description: savedSystem.description,
+            status: savedSystem.status,
+            creationDate: savedSystem.creationDate,
+            updateDate: savedSystem.updateDate,
+            user: {
+                userId: savedSystem.user.userId,
+                name: savedSystem.user.name,
+                email: savedSystem.user.email
+            }
+        };
+    }
+
+    async getGrowingSystemsByUserId(userId: number): Promise<PublicGrowingSystem[]> {
+        const systems = await this.growingSystemRepository.find({
+            where: { user: { userId } },
+            relations: ['user']
+        });
+        return systems.map(system => ({
+            systemId: system.systemId,
+            name: system.name,
+            ubication: system.ubication,
+            description: system.description,
+            status: system.status,
+            creationDate: system.creationDate,
+            updateDate: system.updateDate,
+        })
+        );
+    }
+
+    async updateGrowingSystem(systemId: number, payload: UpdateGrowingSystemRequest): Promise<PublicGrowingSystem> {
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId },
+            relations: ['user']
+        });
+
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+
+        const updatedSystem = this.growingSystemRepository.merge(system, payload);
+        const savedSystem = await this.growingSystemRepository.save(updatedSystem);
+
+        return {
+            systemId: savedSystem.systemId,
+            name: savedSystem.name,
+            ubication: savedSystem.ubication,
+            description: savedSystem.description,
+            status: savedSystem.status,
+            creationDate: savedSystem.creationDate,
+            updateDate: savedSystem.updateDate,
+            user: {
+                userId: savedSystem.user.userId,
+                name: savedSystem.user.name,
+                email: savedSystem.user.email
+            }
+        };
+    }
+
+    async deleteGrowingSystem(systemId: number): Promise<void> {
+        const system = await this.growingSystemRepository.findOne({ where: { systemId } });
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+
+        system.status = Status.INACTIVE;
+        await this.growingSystemRepository.save(system);
+    }
+}

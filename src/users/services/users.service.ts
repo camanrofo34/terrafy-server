@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "../../domain/entities";
 import { Repository } from "typeorm";
@@ -22,9 +22,6 @@ export class UsersService{
     async getUserByEmail(email: string): Promise<User | null> {
         try {
             const user = await this.userRepository.findOne({ where: { email } });
-            if (!user) {
-                throw new NotFoundException("User not found");
-            }
             return user;
         }
         catch (error) {
@@ -66,9 +63,6 @@ export class UsersService{
     async getUserById(userId: number): Promise<User | null> {
         try {
             const user = await this.userRepository.findOne({ where: { userId } });
-            if (!user) {
-                throw new NotFoundException("User not found");
-            }
             return user;
         }
         catch (error) {
@@ -82,6 +76,10 @@ export class UsersService{
 
         if (!existingUser) {
             throw new NotFoundException("User not found");
+        }
+
+        if (existingUser.status !== Status.ACTIVE) {
+            throw new BadRequestException("User account is not active");
         }
 
         if (payload.password) {
