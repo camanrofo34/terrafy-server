@@ -89,4 +89,20 @@ export class GrowingSystemController {
     deleteGrowingSystem(@Param('systemId') systemId: number) {
         return this.growingSystemService.deleteGrowingSystem(systemId);
     }
+
+
+    @Patch(':systemId/variable/:variableId')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth("access-token")
+    @ApiOperation({
+        summary: "Add or update an agronomic variable in a growing system",
+        description: "Adds a new agronomic variable or updates an existing one in a specific growing system."
+    })
+    associateAgronomicVariable(
+        @Param('systemId') systemId: number,
+        @Param('variableId') variableId: number,
+        @Body() payload: { sampleRate: number }
+    ){
+        return this.growingSystemService.associateAgronomicVariable(systemId, variableId, payload.sampleRate);
+    }
 }

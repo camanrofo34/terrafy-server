@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ApiCenterService } from './api-center/api-center.service';
 import {
   Alert,
   AlertDefinition,
@@ -19,6 +18,8 @@ import { AuthService } from './users/services/auth.service';
 import { BcryptService } from './users/services/bcrypt.service';
 import { GrowingSystemController } from './growingSystem/controller/growing_system.controller';
 import { GrowingSystemService } from './growingSystem/services/growing_system.service';
+import { AgronomicVariableController } from './agronomicVariable/controller/agronomic_variable.controller';
+import { AgronomicVariableService } from './agronomicVariable/services/agronomic_variable.service';
 
 @Module({
   imports: [
@@ -60,7 +61,7 @@ import { GrowingSystemService } from './growingSystem/services/growing_system.se
       Alert,
     ]),
   ],
-  controllers: [UsersController, GrowingSystemController],
-  providers: [ApiCenterService, UsersService, AuthService, BcryptService, GrowingSystemService],
+  controllers: [UsersController, GrowingSystemController, AgronomicVariableController],
+  providers: [UsersService, AuthService, BcryptService, GrowingSystemService, AgronomicVariableService],
 })
 export class AppModule {}

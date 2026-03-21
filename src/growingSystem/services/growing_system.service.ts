@@ -1,18 +1,22 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { GrowingSystem } from "../../domain/entities";
+import { GrowingSystem, SystemVariable } from "../../domain/entities";
 import { Like, Repository } from "typeorm";
 import { UsersService } from "../../users/services/users.service";
 import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
 import { Status } from "../../domain/enums/status.enum";
 import { PublicGrowingSystem } from "../model/public/PublicGrowingSystem.types";
 import { UpdateGrowingSystemRequest } from "../model/dto/request/UpdateGrowingSystemRequest.types";
+import { AgronomicVariableService } from "../../agronomicVariable/services/agronomic_variable.service";
 
 @Injectable()
 export class GrowingSystemService {
     constructor(
         @InjectRepository(GrowingSystem)
         private readonly growingSystemRepository: Repository<GrowingSystem>,
+        @InjectRepository(SystemVariable)
+        private readonly systemVariableRepository: Repository<SystemVariable>,
+        private readonly agronomicVariableService: AgronomicVariableService,
         private readonly userService: UsersService
     ){}
 
@@ -131,4 +135,35 @@ export class GrowingSystemService {
         system.status = Status.INACTIVE;
         await this.growingSystemRepository.save(system);
     }
+
+    async associateAgronomicVariable(systemId: number, variableId: number, sampleRate: number = 60): Promise<void> {
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId }
+        });
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+
+        const variable = await this.agronomicVariableService.getAgronomicVariableById(variableId);
+        if (!variable) {
+            throw new NotFoundException('Agronomic variable not found');
+        }
+
+        let systemVariable = await this.systemVariableRepository.findOne({
+            where: { system: { systemId }, variable: { variableId } }
+        });
+
+        if (systemVariable) {
+            systemVariable.sampleRate = sampleRate;
+        }
+        else {
+            systemVariable = this.systemVariableRepository.create({
+                system: { systemId },
+                variable: { variableId },
+                sampleRate
+            });
+        }
+        await this.systemVariableRepository.save(systemVariable);
+    }
+
 }

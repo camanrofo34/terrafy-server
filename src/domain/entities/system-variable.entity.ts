@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -22,12 +23,6 @@ export class SystemVariable {
   @PrimaryGeneratedColumn({ name: 'system_variable_id' })
   systemVariableId: number;
 
-  @Column({ name: 'system_id' })
-  systemId: number;
-
-  @Column({ name: 'variable_id' })
-  variableId: number;
-
   @Column({ name: 'sample_rate', type: 'integer', default: 60 })
   sampleRate: number;
 
@@ -37,11 +32,18 @@ export class SystemVariable {
   @UpdateDateColumn({ name: 'update_date', type: 'datetime' })
   updateDate: Date;
 
+  @Column({ name: 'system_id', type: 'integer' })
+  systemId: number;
+
+  @Column({ name: 'variable_id', type: 'integer' })
+  variableId: number;
+
   @ManyToOne(() => GrowingSystem, (system) => system.systemVariables, {
     eager: false,
     nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'system_id' })
   system: GrowingSystem;
 
   @ManyToOne(() => AgronomicVariable, (variable) => variable.systemVariables, {
@@ -49,6 +51,7 @@ export class SystemVariable {
     nullable: false,
     onDelete: 'RESTRICT',
   })
+  @JoinColumn({ name: 'variable_id' })
   variable: AgronomicVariable;
 
   @OneToMany(

@@ -6,10 +6,10 @@ import {
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { LoginRequest } from "../model/dto/request/loginRequest.types";
-import { LoginResponse } from "../../api-center/api-center.types";
 import * as jwt from "jsonwebtoken";
 import { BcryptService } from "./bcrypt.service";
 import { Status } from "../../domain/enums/status.enum";
+import { LoginResponse } from "../model/dto/response/loginResponse.types";
 
 @Injectable()
 export class AuthService {
