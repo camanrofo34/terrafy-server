@@ -120,6 +120,50 @@ export class UsersService{
         await this.userRepository.save(existingUser);
     }
 
+    async getAllUsers(
+        page: number = 1,
+        limit: number = 10,
+        query?: string,
+        sortBy: string = 'creationDate',
+        sortOrder: 'ASC' | 'DESC' = 'DESC'
+    ): Promise<{ users: PublicUser[], total: number, page: number, lastPage: number }> {
+        const { Like } = require('typeorm');
+        
+        const [users, total] = await this.userRepository.findAndCount({
+            where: query ? [
+                { name: Like(`%${query}%`) },
+                { email: Like(`%${query}%`) }
+            ] : {},
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { [sortBy]: sortOrder }
+        });
+
+        return {
+            users: users.map(u => this.toPublicUser(u)),
+            total,
+            page,
+            lastPage: Math.ceil(total / limit)
+        };
+    }
+
+    async getUsersByRole(role: Role): Promise<PublicUser[]> {
+        const users = await this.userRepository.find({ where: { role, status: Status.ACTIVE } });
+        return users.map(u => this.toPublicUser(u));
+    }
+
+    private toPublicUser(user: User): PublicUser {
+        return {
+            userId: user.userId,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            creationDate: user.creationDate,
+            updateDate: user.updateDate,
+        };
+    }
+
     private async checkPasswordStrength(password: string): Promise<void> {
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         if (!passwordRegex.test(password)) {

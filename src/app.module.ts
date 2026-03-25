@@ -20,6 +20,14 @@ import { GrowingSystemController } from './growingSystem/controller/growing_syst
 import { GrowingSystemService } from './growingSystem/services/growing_system.service';
 import { AgronomicVariableController } from './agronomicVariable/controller/agronomic_variable.controller';
 import { AgronomicVariableService } from './agronomicVariable/services/agronomic_variable.service';
+import { IoTDeviceService } from './iotDevice/services/iot-device.service';
+import { IoTDeviceController } from './iotDevice/controller/iot-device.controller';
+import { SensorService } from './sensor/services/sensor.service';
+import { SensorController } from './sensor/controller/sensor.controller';
+import { SensorReadingService } from './sensorReading/services/sensor-reading.service';
+import { SensorReadingController } from './sensorReading/controller/sensor-reading.controller';
+import { AlertService } from './alert/services/alert.service';
+import { AlertController } from './alert/controller/alert.controller';
 
 @Module({
   imports: [
@@ -61,7 +69,25 @@ import { AgronomicVariableService } from './agronomicVariable/services/agronomic
       Alert,
     ]),
   ],
-  controllers: [UsersController, GrowingSystemController, AgronomicVariableController],
-  providers: [UsersService, AuthService, BcryptService, GrowingSystemService, AgronomicVariableService],
+  controllers: [
+    UsersController,
+    GrowingSystemController,
+    AgronomicVariableController,
+    IoTDeviceController,
+    SensorController,
+    SensorReadingController,
+    AlertController,
+  ],
+  providers: [
+    UsersService,
+    AuthService,
+    BcryptService,
+    GrowingSystemService,
+    AgronomicVariableService,
+    IoTDeviceService,
+    SensorService,
+    SensorReadingService,
+    AlertService,
+  ],
 })
 export class AppModule {}
