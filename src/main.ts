@@ -6,6 +6,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.enableCors();
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Terrafy API')
@@ -16,6 +17,6 @@ async function bootstrap() {
 
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, swaggerDocument);
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, "0.0.0.0");
 }
 bootstrap();

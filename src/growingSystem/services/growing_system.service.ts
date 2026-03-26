@@ -166,4 +166,102 @@ export class GrowingSystemService {
         await this.systemVariableRepository.save(systemVariable);
     }
 
+    async getAllGrowingSystems(
+        page: number = 1,
+        limit: number = 10,
+        query?: string,
+        sortBy: string = 'creationDate',
+        sortOrder: 'ASC' | 'DESC' = 'DESC'
+    ): Promise<{
+        systems: PublicGrowingSystem[], total: number, page: number, lastPage: number
+    }> {
+        const [systems, total] = await this.growingSystemRepository.findAndCount({
+            where: query
+                ? [
+                    {
+                        status: Status.ACTIVE,
+                        name: Like(`%${query}%`)
+                    },
+                    {
+                        status: Status.ACTIVE,
+                        description: Like(`%${query}%`)
+                    }
+                ]
+                : { status: Status.ACTIVE },
+            relations: ['user'],
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { [sortBy]: sortOrder }
+        });
+
+        const data = systems.map(system => this.toPublicGrowingSystem(system));
+
+        return {
+            systems: data,
+            total,
+            page,
+            lastPage: Math.ceil(total / limit),
+        };
+    }
+
+    async getGrowingSystemById(systemId: number): Promise<PublicGrowingSystem> {
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId },
+            relations: ['user']
+        });
+
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+
+        return this.toPublicGrowingSystem(system);
+    }
+
+    async getSystemVariables(systemId: number): Promise<SystemVariable[]> {
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId }
+        });
+
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+
+        return this.systemVariableRepository.find({
+            where: { system: { systemId } },
+            relations: ['variable']
+        });
+    }
+
+    async removeAgronomicVariable(systemId: number, variableId: number): Promise<void> {
+        const systemVariable = await this.systemVariableRepository.findOne({
+            where: {
+                system: { systemId },
+                variable: { variableId }
+            }
+        });
+
+        if (!systemVariable) {
+            throw new NotFoundException('System-Variable association not found');
+        }
+
+        await this.systemVariableRepository.remove(systemVariable);
+    }
+
+    private toPublicGrowingSystem(system: GrowingSystem): PublicGrowingSystem {
+        return {
+            systemId: system.systemId,
+            name: system.name,
+            ubication: system.ubication,
+            description: system.description,
+            status: system.status,
+            creationDate: system.creationDate,
+            updateDate: system.updateDate,
+            user: {
+                userId: system.user.userId,
+                name: system.user.name,
+                email: system.user.email
+            }
+        };
+    }
+
 }
