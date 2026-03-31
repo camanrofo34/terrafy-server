@@ -42,6 +42,7 @@ import { AlertController } from './alert/controller/alert.controller';
       username: process.env.DB_USERNAME ?? 'root',
       password: process.env.DB_PASSWORD ?? '',
       database: process.env.DB_NAME ?? 'terrafy',
+      ssl: { rejectUnauthorized: false },  
       entities: [
         User,
         GrowingSystem,
