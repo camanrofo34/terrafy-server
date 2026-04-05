@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "../../domain/entities";
 import { Repository } from "typeorm";
@@ -73,8 +73,12 @@ export class UsersService{
         }
     }
 
-    async updateUser(payload: UpdateUserRequest, userId: string): Promise<PublicUser> {
+    async updateUser(payload: UpdateUserRequest, userId: string, authUser: User): Promise<PublicUser> {
         const existingUser = await this.getUserById(parseInt(userId));
+
+        if (authUser.role !== Role.ADMIN && authUser.userId !== parseInt(userId)) {
+            throw new ForbiddenException("You do not have permission to update this user");
+        }
 
         if (!existingUser) {
             throw new NotFoundException("User not found");
@@ -110,10 +114,16 @@ export class UsersService{
         }
     }
 
-    async deleteUser(userId: string): Promise<void> {
+    async deleteUser(userId: string, authUser: User): Promise<void> {
         const existingUser = await this.getUserById(parseInt(userId));
+
+        console.log('Existing user:', authUser);
         if (!existingUser) {
             throw new NotFoundException("User not found");
+        }
+
+        if (authUser.role !== Role.ADMIN && authUser.userId !== parseInt(userId)) {
+            throw new ForbiddenException("You do not have permission to delete this user");
         }
 
         this.userRepository.merge(existingUser, { status: Status.INACTIVE });
@@ -165,7 +175,7 @@ export class UsersService{
     }
 
     private async checkPasswordStrength(password: string): Promise<void> {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._])[A-Za-z\d@$!%*?&._]{8,}$/;
         if (!passwordRegex.test(password)) {
             throw new BadRequestException("Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character");
         }

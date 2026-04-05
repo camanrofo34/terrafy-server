@@ -1,0 +1,1233 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Terrafy",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/api/users/login": {
+      "post": {
+        "summary": "IniciarSesión",
+        "deprecated": false,
+        "description": "Inicio de Sesión en la plataforma Terrafy",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "camanrofo@gmail.com",
+                "password": "Ti1097096174*"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessfulLoginResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users": {
+      "post": {
+        "summary": "RegistroUsuario",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "name": "Matilde Nava Aragón",
+                "email": "Ramon27@gmail.com",
+                "password": "1jl4wF9i6FRH_Ll"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessfulRegistrationUpdateResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users/{userId}": {
+      "patch": {
+        "summary": "EditarUsuario",
+        "deprecated": false,
+        "description": "Edición de usuario en la plataforma Terrafy.",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "Identificador único del usuario a editar",
+            "required": true,
+            "example": 2,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              },
+              "example": {
+                "email": "camanrofo1@gmail.com"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessfulRegistrationUpdateResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "SesiónAgraria": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "DesactivarUsuario",
+        "deprecated": false,
+        "description": "Eliminación (soft-delete) de un usuario dentro de la plataforma Terrafy.",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 5,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "",
+            "headers": {}
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "SesiónAgraria": []
+          }
+        ]
+      }
+    },
+    "/api/growing-systems": {
+      "post": {
+        "summary": "CrearSistemasCultivo",
+        "deprecated": false,
+        "description": "Creación de un sistema de cultivo para un usuario del sistema Terrafy.",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationGrowingSystemRequest"
+              },
+              "example": {
+                "userId": 2,
+                "name": "Cultivos1",
+                "location": "Calle Verónica s/n.",
+                "description": "Universe trepide deduco theatrum vaco comes arcus sublime cattus. Amissio tum itaque curia iure. Illum defero aperiam ventosus complectus defendo terra acidus et solus. Conventus trepide crux sperno aestivus comprehendo. Caste contego adicio eaque corpus varius ventito vitae ventito."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationUdateGrowingSystemResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "SesiónAgraria": []
+          }
+        ]
+      }
+    },
+    "/api/growing-systems/{userId}": {
+      "get": {
+        "summary": "RecuperarSistemasCrecimiento",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": "2",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "example": "1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "example": "10",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrowingSystemList"
+                },
+                "example": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "title": "Listado de Sistemas de Cultivos",
+                  "description": "Respuesta paginada que contiene una lista de sistemas de cultivos.",
+                  "required": [
+                    "systems",
+                    "total",
+                    "page",
+                    "lastPage"
+                  ],
+                  "properties": {
+                    "systems": {
+                      "type": "array",
+                      "description": "Lista de sistemas de cultivos.",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "systemId",
+                          "name",
+                          "ubication",
+                          "description",
+                          "status",
+                          "creationDate",
+                          "updateDate"
+                        ],
+                        "properties": {
+                          "systemId": {
+                            "type": "integer",
+                            "description": "Identificador único del sistema de cultivos.",
+                            "example": 3
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Nombre del sistema de cultivos.",
+                            "minLength": 1
+                          },
+                          "ubication": {
+                            "type": "string",
+                            "description": "Ubicación física del sistema.",
+                            "minLength": 1
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Descripción detallada del sistema.",
+                            "minLength": 1
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Estado del sistema.",
+                            "enum": [
+                              "active",
+                              "inactive"
+                            ]
+                          },
+                          "creationDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Fecha de creación en formato ISO 8601."
+                          },
+                          "updateDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Fecha de última actualización en formato ISO 8601."
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Cantidad total de registros disponibles.",
+                      "minimum": 0,
+                      "example": 2
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "Número actual de página.",
+                      "minimum": 1,
+                      "example": 1
+                    },
+                    "lastPage": {
+                      "type": "integer",
+                      "description": "Número total de páginas disponibles.",
+                      "minimum": 1,
+                      "example": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "headers": {}
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "SesiónAgraria": []
+          }
+        ]
+      }
+    },
+    "/api/growing-systems/{systemId}": {
+      "patch": {
+        "summary": "ActualizarSistemaCrecimiento",
+        "deprecated": false,
+        "description": "Actualización de los datos del sistema de crecimiento",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "systemId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": "6",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGrowingSystemRequest"
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationUdateGrowingSystemResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SesiónAgraria": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "DesactivarSistemaCultivo",
+        "deprecated": false,
+        "description": "Desactivación (soft-delete) de un sistema de cultivo de un usuario.",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "systemId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "",
+            "headers": {}
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SesiónAgraria": []
+          }
+        ]
+      }
+    }
+  },
+  "webhooks": {},
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email del Usuario que desea iniciar sesión."
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña del Usuario que desea iniciar sesión."
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "description": "Cuerpo de solicitud de Inicio de Sesión."
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre completo del usuario que se está registrando."
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo electrónico del usuario que se está registrando."
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña del usuario que se está registrando. Mínimo 8 carácteres, una mayúscula, una minúscula y un símbolo.",
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._])[A-Za-z\\d@$!%*?&._]{8,}$"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nuevo nombre del usuario a editar"
+          },
+          "email": {
+            "type": "string",
+            "description": "Nuevo correo electrónico del usuario a editar"
+          },
+          "password": {
+            "type": "string",
+            "description": "Nueva contraseña del usuario a editar",
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._])[A-Za-z\\d@$!%*?&._]{8,}$",
+            "minLength": 8
+          }
+        }
+      },
+      "GrowingSystemCreationRequest": {
+        "type": "object",
+        "title": "",
+        "description": "Representa un sistema de cultivos con información básica y el usuario asociado.",
+        "required": [
+          "systemId",
+          "name",
+          "ubication",
+          "description",
+          "status",
+          "creationDate",
+          "updateDate",
+          "user"
+        ],
+        "properties": {
+          "systemId": {
+            "type": "integer",
+            "description": "Identificador único del sistema de cultivos.",
+            "examples": [
+              2
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre del sistema de cultivos.",
+            "minLength": 1,
+            "examples": [
+              "Cultivos1"
+            ]
+          },
+          "ubication": {
+            "type": "string",
+            "description": "Ubicación física del sistema de cultivos.",
+            "minLength": 1,
+            "examples": [
+              "Calle Verónica s/n."
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción detallada del sistema de cultivos.",
+            "minLength": 1,
+            "examples": [
+              "Descripción del sistema..."
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Estado actual del sistema de cultivos.",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "examples": [
+              "active"
+            ]
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de creación del sistema en formato ISO 8601.",
+            "examples": [
+              "2026-04-04T21:33:08.607Z"
+            ]
+          },
+          "updateDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de última actualización del sistema en formato ISO 8601.",
+            "examples": [
+              "2026-04-04T21:33:08.607Z"
+            ]
+          },
+          "user": {
+            "type": "object",
+            "description": "Información del usuario propietario del sistema.",
+            "required": [
+              "userId",
+              "name",
+              "email"
+            ],
+            "properties": {
+              "userId": {
+                "type": "integer",
+                "description": "Identificador único del usuario.",
+                "examples": [
+                  2
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "Nombre completo del usuario.",
+                "minLength": 1,
+                "examples": [
+                  "Camilo Rodriguez 2"
+                ]
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Correo electrónico del usuario.",
+                "examples": [
+                  "camanrofo@gmail.com"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateGrowingSystemRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nuevo nombre del sistema de cultivo."
+          },
+          "location": {
+            "type": "string",
+            "description": "Nueva ubicación del sistema de cultivo."
+          },
+          "description": {
+            "type": "string",
+            "description": "Nueva descripción del sistema de cultivo."
+          }
+        }
+      },
+      "CreationGrowingSystemRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Identificador del usuario que crea el sistema de cultivo NFT"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre identificador del sistema de cultivo"
+          },
+          "location": {
+            "type": "string",
+            "description": "Ubicación del sistema de cultivo"
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción del sistema de cultivo."
+          }
+        },
+        "required": [
+          "userId",
+          "name",
+          "location"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "Código HTTP representativo del error."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Fecha y hora en la que se produjo el error."
+          },
+          "path": {
+            "type": "string",
+            "description": "Endpoint que produjo el error."
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Definición exacta de la causa del error que se produjo."
+              },
+              "error": {
+                "type": "string",
+                "description": "Clase del error."
+              },
+              "statusCode": {
+                "type": "number",
+                "description": "Código HTTP representativo del error."
+              }
+            },
+            "description": "Definición del error que se produjo.",
+            "required": [
+              "message",
+              "error",
+              "statusCode"
+            ]
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "error"
+        ]
+      },
+      "SuccessfulLoginResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "user"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Token JWT de autenticación generado para el usuario"
+          },
+          "user": {
+            "type": "object",
+            "required": [
+              "userId",
+              "name",
+              "email",
+              "role",
+              "status",
+              "creationDate",
+              "updateDate"
+            ],
+            "properties": {
+              "userId": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Identificador único del usuario"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "description": "Nombre completo del usuario"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "maxLength": 255,
+                "description": "Correo electrónico del usuario"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "agrarian",
+                  "admin",
+                  "customer"
+                ],
+                "description": "Rol asignado al usuario dentro del sistema"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "inactive",
+                  "suspended"
+                ],
+                "description": "Estado actual del usuario"
+              },
+              "creationDate": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Fecha y hora de creación del usuario en formato ISO 8601"
+              },
+              "updateDate": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Fecha y hora de la última actualización en formato ISO 8601"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Información detallada del usuario autenticado"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SuccessfulRegistrationUpdateResponse": {
+        "type": "object",
+        "required": [
+          "userId",
+          "name",
+          "email",
+          "role",
+          "status",
+          "creationDate",
+          "updateDate"
+        ],
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Identificador único del usuario."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Nombre completo del usuario."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "description": "Correo electrónico del usuario."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "agrarian",
+              "admin",
+              "customer"
+            ],
+            "description": "Rol del usuario."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ],
+            "description": "Estado actual del usuario."
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Tiempo de creación en formato ISO 8601."
+          },
+          "updateDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Último tiempo de actualización en formato ISO 8601"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreationUdateGrowingSystemResponse": {
+        "type": "object",
+        "properties": {
+          "systemId": {
+            "type": "integer",
+            "description": "Identificador único del sistema de cultivos.",
+            "examples": [
+              2
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre del sistema de cultivos.",
+            "minLength": 1,
+            "examples": [
+              "Cultivos1"
+            ]
+          },
+          "ubication": {
+            "type": "string",
+            "description": "Ubicación física del sistema de cultivos.",
+            "minLength": 1,
+            "examples": [
+              "Calle Verónica s/n."
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción detallada del sistema de cultivos.",
+            "minLength": 1,
+            "examples": [
+              "Descripción del sistema..."
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Estado actual del sistema de cultivos.",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "examples": [
+              "active"
+            ]
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de creación del sistema en formato ISO 8601.",
+            "examples": [
+              "2026-04-04T21:33:08.607Z"
+            ]
+          },
+          "updateDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de última actualización del sistema en formato ISO 8601.",
+            "examples": [
+              "2026-04-04T21:33:08.607Z"
+            ]
+          },
+          "user": {
+            "type": "object",
+            "description": "Información del usuario propietario del sistema.",
+            "required": [
+              "userId",
+              "name",
+              "email"
+            ],
+            "properties": {
+              "userId": {
+                "type": "integer",
+                "description": "Identificador único del usuario.",
+                "examples": [
+                  2
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "Nombre completo del usuario.",
+                "minLength": 1,
+                "examples": [
+                  "Camilo Rodriguez 2"
+                ]
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Correo electrónico del usuario.",
+                "examples": [
+                  "camanrofo@gmail.com"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "systemId",
+          "name",
+          "ubication",
+          "description",
+          "status",
+          "creationDate",
+          "updateDate",
+          "user"
+        ]
+      },
+      "GrowingSystemList": {
+        "type": "object",
+        "title": "Listado de Sistemas de Cultivos",
+        "description": "Respuesta paginada que contiene una lista de sistemas de cultivos.",
+        "required": [
+          "systems",
+          "total",
+          "page",
+          "lastPage"
+        ],
+        "properties": {
+          "systems": {
+            "type": "array",
+            "description": "Lista de sistemas de cultivos.",
+            "items": {
+              "type": "object",
+              "required": [
+                "systemId",
+                "name",
+                "ubication",
+                "description",
+                "status",
+                "creationDate",
+                "updateDate"
+              ],
+              "properties": {
+                "systemId": {
+                  "type": "integer",
+                  "description": "Identificador único del sistema de cultivos.",
+                  "examples": [
+                    3
+                  ]
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Nombre del sistema de cultivos.",
+                  "minLength": 1
+                },
+                "ubication": {
+                  "type": "string",
+                  "description": "Ubicación física del sistema.",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Descripción detallada del sistema.",
+                  "minLength": 1
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Estado del sistema.",
+                  "enum": [
+                    "active",
+                    "inactive"
+                  ]
+                },
+                "creationDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Fecha de creación en formato ISO 8601."
+                },
+                "updateDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Fecha de última actualización en formato ISO 8601."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Cantidad total de registros disponibles.",
+            "minimum": 0,
+            "examples": [
+              2
+            ]
+          },
+          "page": {
+            "type": "integer",
+            "description": "Número actual de página.",
+            "minimum": 1,
+            "examples": [
+              1
+            ]
+          },
+          "lastPage": {
+            "type": "integer",
+            "description": "Número total de páginas disponibles.",
+            "minimum": 1,
+            "examples": [
+              1
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "responses": {},
+    "securitySchemes": {
+      "SesiónAgraria": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "servers": [],
+  "security": []
+}

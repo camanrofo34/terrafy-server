@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { GrowingSystem, SystemVariable } from "../../domain/entities";
+import { GrowingSystem, SystemVariable, User } from "../../domain/entities";
 import { Like, Repository } from "typeorm";
 import { UsersService } from "../../users/services/users.service";
 import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
@@ -8,6 +8,7 @@ import { Status } from "../../domain/enums/status.enum";
 import { PublicGrowingSystem } from "../model/public/PublicGrowingSystem.types";
 import { UpdateGrowingSystemRequest } from "../model/dto/request/UpdateGrowingSystemRequest.types";
 import { AgronomicVariableService } from "../../agronomicVariable/services/agronomic_variable.service";
+import { Role } from "../../domain/enums/role.enum";
 
 @Injectable()
 export class GrowingSystemService {
@@ -20,10 +21,13 @@ export class GrowingSystemService {
         private readonly userService: UsersService
     ){}
 
-    async createGrowingSystem(payload: CreateGrowingSystemRequest): Promise<PublicGrowingSystem> {
+    async createGrowingSystem(payload: CreateGrowingSystemRequest, authUser: User): Promise<PublicGrowingSystem> {
         const user = await this.userService.getUserById(payload.userId);
         if (!user) {
             throw new NotFoundException('User not found');
+        }
+        if (user.role !== Role.ADMIN && user.userId !== authUser.userId) {
+            throw new ForbiddenException('User is not authorized to create a growing system for another user');
         }
 
         const newSystem = this.growingSystemRepository.create({
@@ -51,10 +55,13 @@ export class GrowingSystemService {
         };
     }
 
-    async getGrowingSystemsByUserId(userId: number, page: number = 1, limit: number = 10, query?: string, sortBy: string = 'creationDate', sortOrder: 'ASC' | 'DESC' = 'DESC'): 
+    async getGrowingSystemsByUserId(userId: number, page: number = 1, limit: number = 10, authUser: User, query?: string, sortBy: string = 'creationDate', sortOrder: 'ASC' | 'DESC' = 'DESC'): 
     Promise<{
         systems: PublicGrowingSystem[], total: number, page: number, lastPage: number
     }> {
+        if (authUser.role !== Role.ADMIN && authUser.userId !== parseInt(`${userId}`)) {
+            throw new ForbiddenException('User is not authorized to view growing systems of another user');
+        }
         const [systems, total] = await this.growingSystemRepository.findAndCount({
             where: query
             ? [
@@ -92,12 +99,12 @@ export class GrowingSystemService {
         return {
             systems: data,
             total,
-            page,
+            page: parseInt(`${page}`),
             lastPage: Math.ceil(total / limit),
         };
     }
 
-    async updateGrowingSystem(systemId: number, payload: UpdateGrowingSystemRequest): Promise<PublicGrowingSystem> {
+    async updateGrowingSystem(systemId: number, payload: UpdateGrowingSystemRequest, authUser: User): Promise<PublicGrowingSystem> {
         const system = await this.growingSystemRepository.findOne({
             where: { systemId },
             relations: ['user']
@@ -105,6 +112,10 @@ export class GrowingSystemService {
 
         if (!system) {
             throw new NotFoundException('Growing system not found');
+        }
+
+        if (authUser.role !== Role.ADMIN && system.user.userId !== parseInt(`${authUser.userId}`)) {
+            throw new ForbiddenException('User is not authorized to update this growing system');
         }
 
         const updatedSystem = this.growingSystemRepository.merge(system, payload);
@@ -126,10 +137,14 @@ export class GrowingSystemService {
         };
     }
 
-    async deleteGrowingSystem(systemId: number): Promise<void> {
+    async deleteGrowingSystem(systemId: number, authUser: User): Promise<void> {
         const system = await this.growingSystemRepository.findOne({ where: { systemId } });
         if (!system) {
             throw new NotFoundException('Growing system not found');
+        }
+
+        if (authUser.role !== Role.ADMIN && system.user.userId !== parseInt(`${authUser.userId}`)) {
+            throw new ForbiddenException('User is not authorized to delete this growing system');
         }
 
         system.status = Status.INACTIVE;
@@ -199,7 +214,7 @@ export class GrowingSystemService {
         return {
             systems: data,
             total,
-            page,
+            page: parseInt(`${page}`),
             lastPage: Math.ceil(total / limit),
         };
     }

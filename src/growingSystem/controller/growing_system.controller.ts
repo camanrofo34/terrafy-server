@@ -1,6 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 import type { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
-import { ApiBearerAuth, ApiBody, ApiOperation } from "@nestjs/swagger";
 import { GrowingSystemService } from "../services/growing_system.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import type { UpdateGrowingSystemRequest } from "../model/dto/request/UpdateGrowingSystemRequest.types";
@@ -14,37 +13,15 @@ export class GrowingSystemController {
 
     @Post()
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth("access-token")
     @HttpCode(201)
-    @ApiOperation({
-        summary: "Create a new growing system",
-        description: "Creates a new growing system associated with a user."
-    })
-    @ApiBody({
-        description: "Data for creating a new growing system",
-        schema: {
-            type: "object",
-            required: ["userId", "name", "location"],
-            properties: {
-                userId: { type: "number", example: 1 },
-                name: { type: "string", example: "My Greenhouse" },
-                location: { type: "string", example: "Backyard" },
-                description: { type: "string", example: "A small greenhouse for growing herbs." }
-            }
-        }
-    })
-    createGrowingSystem(@Body() payload: CreateGrowingSystemRequest){
-        return this.growingSystemService.createGrowingSystem(payload);
+    async createGrowingSystem(@Req() req: Request, @Body() payload: CreateGrowingSystemRequest){
+        return await this.growingSystemService.createGrowingSystem(payload, (req as any).user);
     }
 
     @Get(':userId')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth("access-token")
-    @ApiOperation({
-        summary: "Get growing systems for a user",
-        description: "Retrieves all growing systems associated with a specific user."
-    })
-    getGrowingSystemsByUserId(
+    async getGrowingSystemsByUserId(
+        @Req() req: Request,
         @Param('userId') userId: number,
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
@@ -52,52 +29,25 @@ export class GrowingSystemController {
         @Query('sortBy') sortBy: string = 'creationDate',
         @Query('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC'
     ) {
-        return this.growingSystemService.getGrowingSystemsByUserId(userId, page, limit, query, sortBy, sortOrder);
+        return await this.growingSystemService.getGrowingSystemsByUserId(userId, page, limit, (req as any).user, query, sortBy, sortOrder);
     }
 
     @Patch(':systemId')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth("access-token")  
-    @ApiOperation({
-        summary: "Update a growing system",
-        description: "Updates the details of an existing growing system."
-    })
-    @ApiBody({
-        description: "Data for updating a growing system",
-        schema: {
-            type: "object",
-            properties: {
-                userId: { type: "number", example: 1 },
-                name: { type: "string", example: "Updated Greenhouse" },
-                location: { type: "string", example: "Updated Backyard" },
-                description: { type: "string", example: "An updated description for the greenhouse." }
-            }
-        }
-    })
-    updateGrowingSystem(@Param('systemId') systemId: number, @Body() payload: UpdateGrowingSystemRequest) {
-        return this.growingSystemService.updateGrowingSystem(systemId, payload);
+    updateGrowingSystem(@Req() req: Request, @Param('systemId') systemId: number, @Body() payload: UpdateGrowingSystemRequest) {
+        return this.growingSystemService.updateGrowingSystem(systemId, payload, (req as any).user);
     }
 
     @Delete(':systemId')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth("access-token")
-    @ApiOperation({
-        summary: "Delete a growing system",
-        description: "Deletes an existing growing system by its ID."
-    })
     @HttpCode(204)
-    deleteGrowingSystem(@Param('systemId') systemId: number) {
-        return this.growingSystemService.deleteGrowingSystem(systemId);
+    deleteGrowingSystem(@Param('systemId') systemId: number, @Req() req: Request) {
+        return this.growingSystemService.deleteGrowingSystem(systemId, (req as any).user);
     }
 
 
     @Patch(':systemId/variable/:variableId')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth("access-token")
-    @ApiOperation({
-        summary: "Add or update an agronomic variable in a growing system",
-        description: "Adds a new agronomic variable or updates an existing one in a specific growing system."
-    })
     associateAgronomicVariable(
         @Param('systemId') systemId: number,
         @Param('variableId') variableId: number,
