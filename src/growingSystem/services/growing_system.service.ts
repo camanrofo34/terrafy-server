@@ -6,6 +6,7 @@ import { UsersService } from "../../users/services/users.service";
 import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
 import { Status } from "../../domain/enums/status.enum";
 import { PublicGrowingSystem } from "../model/public/PublicGrowingSystem.types";
+import { PublicGrowingSystemDetails } from "../model/public/PublicGrowingSystemDetails.types";
 import { UpdateGrowingSystemRequest } from "../model/dto/request/UpdateGrowingSystemRequest.types";
 import { AgronomicVariableService } from "../../agronomicVariable/services/agronomic_variable.service";
 import { Role } from "../../domain/enums/role.enum";
@@ -101,6 +102,75 @@ export class GrowingSystemService {
             total,
             page: parseInt(`${page}`),
             lastPage: Math.ceil(total / limit),
+        };
+    }
+
+    async getGrowingSystem(systemId: number, authUser: User): Promise<PublicGrowingSystemDetails> {
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId },
+            relations: [
+                'systemVariables',
+                'systemVariables.variable',
+                'user',
+                'devices',
+                'devices.sensors',
+                'devices.sensors.variable'
+            ]
+        });
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+        if (authUser.role !== Role.ADMIN && system.user.userId !== parseInt(`${authUser.userId}`)) {
+            throw new ForbiddenException('User is not authorized to view this growing system');
+        }
+
+        const systemPublic = this.toPublicGrowingSystem(system);
+
+        // Build sensors list from devices -> sensors
+        const sensors = [] as any[];
+        if (system.devices && system.devices.length > 0) {
+            for (const device of system.devices) {
+                if (!device.sensors) continue;
+                for (const sensor of device.sensors) {
+                    sensors.push({
+                        sensorId: sensor.sensorId,
+                        deviceId: sensor.deviceId,
+                        variableId: sensor.variableId,
+                        sensorType: sensor.sensorType,
+                        status: sensor.status,
+                        creationDate: sensor.creationDate,
+                        updateDate: sensor.updateDate,
+                        device: {
+                            deviceId: device.deviceId,
+                            name: device.name,
+                        },
+                        variable: sensor.variable
+                            ? {
+                                  variableId: sensor.variable.variableId,
+                                  name: sensor.variable.name,
+                                  measurementUnit: sensor.variable.measurementUnit,
+                              }
+                            : undefined,
+                    });
+                }
+            }
+        }
+
+        // Build agronomic variables list with sampleRate from systemVariables
+        const agronomicVariables = (system.systemVariables || []).map((sv) => ({
+            variableId: sv.variable.variableId,
+            name: sv.variable.name,
+            measurementUnit: sv.variable.measurementUnit,
+            description: sv.variable.description,
+            sampleRate: sv.sampleRate,
+            creationDate: sv.variable.creationDate,
+            updateDate: sv.variable.updateDate,
+        }));
+
+        return {
+            system: systemPublic,
+            sensors,
+            agronomicVariables,
         };
     }
 

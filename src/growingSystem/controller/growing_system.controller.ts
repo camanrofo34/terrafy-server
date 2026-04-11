@@ -45,6 +45,12 @@ export class GrowingSystemController {
         return this.growingSystemService.deleteGrowingSystem(systemId, (req as any).user);
     }
 
+    @Get('/system/:systemId')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(200)
+    async getGrowingSystem(@Param('systemId') systemId: number, @Req() req: Request) {
+        return await this.growingSystemService.getGrowingSystem(systemId, (req as any).user);
+    }
 
     @Patch(':systemId/variable/:variableId')
     @UseGuards(JwtAuthGuard)

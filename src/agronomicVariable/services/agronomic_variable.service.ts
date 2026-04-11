@@ -14,7 +14,6 @@ export class AgronomicVariableService {
     ){}
 
     async createAgronomicVariable(payload: AgronomicVariableRequest): Promise<PublicAgronomicVariable> {
-        // Check if variable with same name already exists
         const existingVariable = await this.agronomicVariableRepository.findOne({
             where: { name: payload.name }
         });
