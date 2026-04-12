@@ -5,4 +5,9 @@ export interface PublicAgronomicVariable {
     description?: string;
     creationDate: Date;
     updateDate: Date;
+    alertDefinition?: {
+        alertDefinitionId: number;
+        minValue: number;
+        maxValue: number;
+    };
 }

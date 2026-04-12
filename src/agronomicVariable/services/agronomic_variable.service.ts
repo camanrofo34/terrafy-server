@@ -76,7 +76,6 @@ export class AgronomicVariableService {
             throw new NotFoundException(`Agronomic variable with ID ${variableId} not found`);
         }
 
-        // Check if new name already exists
         if (payload.name && payload.name !== variable.name) {
             const existingVariable = await this.agronomicVariableRepository.findOne({
                 where: { name: payload.name }
@@ -102,6 +101,34 @@ export class AgronomicVariableService {
 
         await this.agronomicVariableRepository.remove(variable);
     }
+
+    async getAgronomicVariable(variableId: number, systemId: number): Promise<PublicAgronomicVariable> {
+        const variable = await this.agronomicVariableRepository.findOne({
+            where: { variableId },
+            relations: ['systemVariables', 'systemVariables.system', 'systemVariables.alertDefinition']
+        });
+        if (!variable) {
+            throw new NotFoundException(`Agronomic variable with ID ${variableId} not found`);
+        }
+        const publicVar = this.toPublicAgronomicVariable(variable);
+
+        if (systemId && variable.systemVariables && variable.systemVariables.length > 0) {
+            const sv = variable.systemVariables.find(s => s.system && s.system.systemId === systemId);
+            if (sv && sv.alertDefinition) {
+                return {
+                    ...publicVar,
+                    alertDefinition: {
+                        alertDefinitionId: sv.alertDefinition.alertDefinitionId,
+                        minValue: sv.alertDefinition.minValue,
+                        maxValue: sv.alertDefinition.maxValue,
+                    }
+                };
+            }
+        }
+
+        return publicVar;
+    }
+
 
     private toPublicAgronomicVariable(variable: AgronomicVariable): PublicAgronomicVariable {
         return {
