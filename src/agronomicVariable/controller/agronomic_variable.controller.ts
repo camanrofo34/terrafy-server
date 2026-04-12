@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { AgronomicVariableService } from "../services/agronomic_variable.service";
 import type AgronomicVariableRequest from "../model/dto/request/agronomicVariableRequest.types";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -23,5 +23,7 @@ export class AgronomicVariableController {
     async deleteAgronomicVariable(@Param('variableId') variableId: number ) {
         return await this.agronomicVariableService.deleteAgronomicVariable(variableId);
     }
+
+    //@Get(':variableId/system/:systemId')
 
 }

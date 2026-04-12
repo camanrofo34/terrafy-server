@@ -54,6 +54,7 @@ export class GrowingSystemController {
 
     @Patch(':systemId/variable/:variableId')
     @UseGuards(JwtAuthGuard)
+    @HttpCode(204)
     associateAgronomicVariable(
         @Param('systemId') systemId: number,
         @Param('variableId') variableId: number,
@@ -64,11 +65,23 @@ export class GrowingSystemController {
 
     @Delete(':systemId/variable/:variableId')
     @UseGuards(JwtAuthGuard)
+    @HttpCode(204)
     disassociateAgronomicVariable(
         @Param('systemId') systemId: number,
         @Param('variableId') variableId: number
     ){
         return this.growingSystemService.disassociateAgronomicVariable(systemId, variableId);
+    }
+
+    @Patch(':systemId/variable/:variableId/alert-definition')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(204)
+    setAlertDefinition(
+        @Param('systemId') systemId: number,
+        @Param('variableId') variableId: number,
+        @Body() payload: { minValue: number, maxValue: number }
+    ){
+        return this.growingSystemService.setAlertDefinition(systemId, variableId, payload.minValue, payload.maxValue);
     }
 
     @Get(':systemId/variables/:variableId/history')

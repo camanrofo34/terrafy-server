@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { GrowingSystem, SensorReading, SystemVariable, User } from "../../domain/entities";
+import { AlertDefinition, GrowingSystem, SensorReading, SystemVariable, User } from "../../domain/entities";
 import { Like, Repository } from "typeorm";
 import { UsersService } from "../../users/services/users.service";
 import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
@@ -22,6 +22,9 @@ export class GrowingSystemService {
 
     @InjectRepository(SensorReading)
     private readonly sensorReadingRepository: Repository<SensorReading>,
+
+    @InjectRepository(AlertDefinition)
+    private readonly alertDefinitionRepository: Repository<AlertDefinition>,
 
     private readonly agronomicVariableService: AgronomicVariableService,
     private readonly userService: UsersService
@@ -116,6 +119,7 @@ export class GrowingSystemService {
             relations: [
                 'systemVariables',
                 'systemVariables.variable',
+                'systemVariables.alertDefinition',
                 'user',
                 'devices',
                 'devices.sensors',
@@ -131,7 +135,6 @@ export class GrowingSystemService {
 
         const systemPublic = this.toPublicGrowingSystem(system);
 
-        // Build sensors list from devices -> sensors
         const sensors = [] as any[];
         if (system.devices && system.devices.length > 0) {
             for (const device of system.devices) {
@@ -161,7 +164,6 @@ export class GrowingSystemService {
             }
         }
 
-        // Build agronomic variables list with sampleRate from systemVariables
         const agronomicVariables = (system.systemVariables || []).map((sv) => ({
             variableId: sv.variable.variableId,
             name: sv.variable.name,
@@ -170,6 +172,13 @@ export class GrowingSystemService {
             sampleRate: sv.sampleRate,
             creationDate: sv.variable.creationDate,
             updateDate: sv.variable.updateDate,
+            alertDefinition: sv.alertDefinition
+                ? {
+                      alertDefinitionId: sv.alertDefinition.alertDefinitionId,
+                      minValue: sv.alertDefinition.minValue,
+                      maxValue: sv.alertDefinition.maxValue,
+                  }
+                : undefined,
         }));
 
         return {
@@ -265,6 +274,32 @@ export class GrowingSystemService {
         }
 
         await this.systemVariableRepository.remove(systemVariable);
+    }
+
+    async setAlertDefinition(systemId: number, variableId: number, minValue: number, maxValue: number): Promise<void> {
+        const systemVariable = await this.systemVariableRepository.findOne({
+            where: { system: { systemId }, variable: { variableId } },
+            relations: ['alertDefinition']
+        });
+        if (!systemVariable) {
+            throw new NotFoundException('System-Variable association not found');
+        }
+
+        if (systemVariable.alertDefinition) {
+            systemVariable.alertDefinition.minValue = minValue;
+            systemVariable.alertDefinition.maxValue = maxValue;
+            await this.systemVariableRepository.save(systemVariable);
+        }
+        else {
+            const alertDefinition = this.alertDefinitionRepository.create({
+                systemVariable: systemVariable,
+                minValue,
+                maxValue
+            });
+            await this.alertDefinitionRepository.save(alertDefinition);
+            systemVariable.alertDefinition = alertDefinition;
+            await this.systemVariableRepository.save(systemVariable);
+        }
     }
 
     async getAllGrowingSystems(

@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -54,13 +55,13 @@ export class SystemVariable {
   @JoinColumn({ name: 'variable_id' })
   variable: AgronomicVariable;
 
-  @OneToMany(
+  @OneToOne(
     () => AlertDefinition,
     (alertDefinition) => alertDefinition.systemVariable,
     {
       eager: false,
     },
   )
-  alertDefinitions: AlertDefinition[];
+  alertDefinition: AlertDefinition;
 }
 

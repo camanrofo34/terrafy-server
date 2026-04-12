@@ -4,8 +4,10 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -34,15 +36,16 @@ export class AlertDefinition {
   @UpdateDateColumn({ name: 'update_date', type: 'datetime' })
   updateDate: Date;
 
-  @ManyToOne(
+  @OneToOne(
     () => SystemVariable,
-    (systemVariable) => systemVariable.alertDefinitions,
+    (systemVariable) => systemVariable.alertDefinition,
     {
       eager: false,
       nullable: false,
       onDelete: 'CASCADE',
     },
   )
+  @JoinColumn({ name: 'system_variable_id' })
   systemVariable: SystemVariable;
 
   @OneToMany(() => Sensor, (sensor) => sensor.alertDefinition, {

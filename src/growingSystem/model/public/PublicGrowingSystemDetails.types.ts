@@ -9,6 +9,11 @@ export interface AgronomicVariableWithSampleRate {
     sampleRate: number;
     creationDate: Date;
     updateDate: Date;
+    alertDefinition?: {
+        alertDefinitionId: number;
+        minValue: number;
+        maxValue: number;
+    };
 }
 
 export interface DeviceSensorInfo {
