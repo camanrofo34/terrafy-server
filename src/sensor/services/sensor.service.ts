@@ -93,11 +93,11 @@ export class SensorService {
 
     // Create sensor
     const sensor = this.sensorRepository.create({
-      deviceId: device.deviceId,
-      variableId: variable.variableId,
-      sensorType: payload.type,
-      status: Status.ACTIVE,
-    });
+  device: { deviceId: device.deviceId },
+  variable: { variableId: variable.variableId },
+  sensorType: payload.type, // 👈 ESTE ES EL CORRECTO
+  status: Status.ACTIVE,
+});
 
     const savedSensor = await this.sensorRepository.save(sensor);
     return this.toPublicSensor(savedSensor);
@@ -123,11 +123,11 @@ export class SensorService {
     }
 
     const sensor = this.sensorRepository.create({
-      deviceId: payload.deviceId,
-      variableId: payload.variableId,
-      sensorType: payload.sensorType,
-      status: Status.ACTIVE,
-    });
+  device: { deviceId: payload.deviceId },
+  variable: { variableId: payload.variableId },
+  sensorType: payload.sensorType,
+  status: Status.ACTIVE,
+});
 
     const savedSensor = await this.sensorRepository.save(sensor);
     return this.toPublicSensor(savedSensor);

@@ -31,7 +31,7 @@ export class SensorReadingService {
     }
 
     const reading = this.readingRepository.create({
-      sensorId: payload.sensorId,
+      sensor: { sensorId: payload.sensorId },
       value: payload.value,
       timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
     });
@@ -74,7 +74,7 @@ export class SensorReadingService {
 
     const readings = payload.readings.map((r) =>
       this.readingRepository.create({
-        sensorId: payload.sensorId,
+        sensor: { sensorId: payload.sensorId },
         value: r.value,
         timestamp: new Date(r.timestamp),
       }),

@@ -55,7 +55,7 @@ import { AlertController } from './alert/controller/alert.controller';
         Alert,
       ],
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: true,
     }),
     TypeOrmModule.forFeature([
       User,

@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { GrowingSystem, SystemVariable, User } from "../../domain/entities";
+import { GrowingSystem, SensorReading, SystemVariable, User } from "../../domain/entities";
 import { Like, Repository } from "typeorm";
 import { UsersService } from "../../users/services/users.service";
 import { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
@@ -10,17 +10,22 @@ import { PublicGrowingSystemDetails } from "../model/public/PublicGrowingSystemD
 import { UpdateGrowingSystemRequest } from "../model/dto/request/UpdateGrowingSystemRequest.types";
 import { AgronomicVariableService } from "../../agronomicVariable/services/agronomic_variable.service";
 import { Role } from "../../domain/enums/role.enum";
-
+import { In } from 'typeorm';
 @Injectable()
 export class GrowingSystemService {
     constructor(
-        @InjectRepository(GrowingSystem)
-        private readonly growingSystemRepository: Repository<GrowingSystem>,
-        @InjectRepository(SystemVariable)
-        private readonly systemVariableRepository: Repository<SystemVariable>,
-        private readonly agronomicVariableService: AgronomicVariableService,
-        private readonly userService: UsersService
-    ){}
+    @InjectRepository(GrowingSystem)
+    private readonly growingSystemRepository: Repository<GrowingSystem>,
+
+    @InjectRepository(SystemVariable)
+    private readonly systemVariableRepository: Repository<SystemVariable>,
+
+    @InjectRepository(SensorReading)
+    private readonly sensorReadingRepository: Repository<SensorReading>,
+
+    private readonly agronomicVariableService: AgronomicVariableService,
+    private readonly userService: UsersService
+) {}
 
     async createGrowingSystem(payload: CreateGrowingSystemRequest, authUser: User): Promise<PublicGrowingSystem> {
         const user = await this.userService.getUserById(payload.userId);
@@ -348,5 +353,46 @@ export class GrowingSystemService {
             }
         };
     }
+    
+    async getVariableHistory(systemId: number, variableId: number) {
 
+  // 1. validar sistema
+  const system = await this.growingSystemRepository.findOne({
+    where: { systemId },
+  });
+
+  if (!system) {
+    throw new NotFoundException('Growing system not found');
+  }
+
+  // 2. validar relación sistema-variable
+  const systemVariable = await this.systemVariableRepository.findOne({
+    where: {
+      systemId,
+      variableId,
+    },
+  });
+
+  if (!systemVariable) {
+    throw new NotFoundException('Variable not associated with this system');
+  }
+
+  // 3. traer historial directamente (SIN hacks de sensorIds)
+  const readings = await this.sensorReadingRepository
+    .createQueryBuilder('reading')
+    .innerJoin('reading.sensor', 'sensor')
+    .innerJoin('sensor.variable', 'variable')
+    .innerJoin('sensor.device', 'device')
+    .where('device.system_id = :systemId', { systemId })
+    .andWhere('variable.variable_id = :variableId', { variableId })
+    .orderBy('reading.timestamp', 'ASC')
+    .getMany();
+
+  // 4. respuesta limpia
+  if (readings.length === 0) {
+    return { message: 'No hay datos disponibles' };
+  }
+
+  return readings;
+}
 }

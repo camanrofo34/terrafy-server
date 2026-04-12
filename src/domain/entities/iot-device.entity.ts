@@ -7,6 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { DeviceType } from '../enums/device-type.enum';
 import { Status } from '../enums/status.enum';
@@ -14,14 +15,11 @@ import { GrowingSystem } from './growing-system.entity';
 import { Sensor } from './sensor.entity';
 
 @Entity({ name: 'iot_devices' })
-@Index('ix_iot_devices_system_id', ['systemId'])
+@Index('ix_iot_devices_system_id', ['system'])
 @Index('ux_iot_devices_logic_id', ['logicId'], { unique: true })
 export class IoTDevice {
   @PrimaryGeneratedColumn({ name: 'device_id' })
   deviceId: number;
-
-  @Column({ name: 'system_id' })
-  systemId: number;
 
   @Column({ type: 'varchar', length: 120 })
   name: string;
@@ -57,11 +55,13 @@ export class IoTDevice {
     nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'system_id' })
   system: GrowingSystem;
-
+  
+  @Column({ name: 'system_id' })
+  systemId: number;
   @OneToMany(() => Sensor, (sensor) => sensor.device, {
     eager: false,
   })
   sensors: Sensor[];
 }
-

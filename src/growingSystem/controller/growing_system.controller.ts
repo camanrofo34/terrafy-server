@@ -61,4 +61,13 @@ export class GrowingSystemController {
     ){
         return this.growingSystemService.associateAgronomicVariable(systemId, variableId, payload.sampleRate);
     }
+
+    @Get(':systemId/variables/:variableId/history')
+    @UseGuards(JwtAuthGuard)
+    async getVariableHistory(
+        @Param('systemId') systemId: number,
+        @Param('variableId') variableId: number
+    ) {
+    return await this.growingSystemService.getVariableHistory(systemId, variableId);
+    }
 }
