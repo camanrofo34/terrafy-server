@@ -62,12 +62,21 @@ export class GrowingSystemController {
         return this.growingSystemService.associateAgronomicVariable(systemId, variableId, payload.sampleRate);
     }
 
+    @Delete(':systemId/variable/:variableId')
+    @UseGuards(JwtAuthGuard)
+    disassociateAgronomicVariable(
+        @Param('systemId') systemId: number,
+        @Param('variableId') variableId: number
+    ){
+        return this.growingSystemService.disassociateAgronomicVariable(systemId, variableId);
+    }
+
     @Get(':systemId/variables/:variableId/history')
     @UseGuards(JwtAuthGuard)
     async getVariableHistory(
         @Param('systemId') systemId: number,
         @Param('variableId') variableId: number
     ) {
-    return await this.growingSystemService.getVariableHistory(systemId, variableId);
+        return await this.growingSystemService.getVariableHistory(systemId, variableId);
     }
 }

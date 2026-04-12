@@ -256,6 +256,17 @@ export class GrowingSystemService {
         await this.systemVariableRepository.save(systemVariable);
     }
 
+    async disassociateAgronomicVariable(systemId: number, variableId: number): Promise<void> {
+        const systemVariable = await this.systemVariableRepository.findOne({
+            where: { system: { systemId }, variable: { variableId } }
+        });
+        if (!systemVariable) {
+            throw new NotFoundException('System-Variable association not found');
+        }
+
+        await this.systemVariableRepository.remove(systemVariable);
+    }
+
     async getAllGrowingSystems(
         page: number = 1,
         limit: number = 10,
