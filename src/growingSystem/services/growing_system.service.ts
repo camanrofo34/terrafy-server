@@ -383,6 +383,89 @@ export class GrowingSystemService {
         await this.systemVariableRepository.remove(systemVariable);
     }
 
+    async getLatestVariableValues(systemId: number): Promise<any> {
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId },
+        });
+
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
+
+        const VARIABLES: Record<string, any> = {
+            "1": { variableId: "1", name: "Temperatura", measurementUnit: "°C", field: "environment.temperature_c" },
+            "2": { variableId: "2", name: "Humedad Relativa", measurementUnit: "%", field: "environment.rh_percent" },
+            "3": { variableId: "3", name: "Déficit de la presión de vapor", measurementUnit: "kPa", field: "environment.vpd_kpa" },
+            "4": { variableId: "4", name: "pH", measurementUnit: "pH", field: "sensors.ph" },
+            "5": { variableId: "5", name: "Conductividad Eléctrica", measurementUnit: "mS/cm", field: "sensors.ec_ms_cm" },
+            "6": { variableId: "6", name: "Oxígeno Disuelto", measurementUnit: "mg/L", field: "sensors.dissolved_o2" },
+            "7": { variableId: "7", name: "Nitrógeno", measurementUnit: "mmol/L", field: "concentrations.N" },
+            "8": { variableId: "8", name: "Fósforo", measurementUnit: "mmol/L", field: "concentrations.P" },
+            "9": { variableId: "9", name: "Potasio", measurementUnit: "mmol/L", field: "concentrations.K" },
+            "10": { variableId: "10", name: "Altura del cultivo", measurementUnit: "cm", field: "plant.root_length_cm" },
+        };
+
+        const SYSTEMS: Record<string, any> = {
+            "1": { systemId: "1", name: "Sistema de Lechugas NFT A", description: "Nutrient Film Technique system for lettuce cultivation" },
+            "2": { systemId: "2", name: "Sistema DWC B", description: "Deep Water Culture system for basil production" },
+            "3": { systemId: "3", name: "Flujo de fresas C", description: "Ebb and Flow system for strawberry cultivation" },
+        };
+
+        const growthStageToSpanish = (stage: string) => {
+            switch (stage) {
+                case 'seedling': return 'plántula';
+                case 'vegetative': return 'vegetativo';
+                case 'mature': return 'maduro';
+                case 'harvest_ready': return 'listo para cosecha';
+                default: return stage;
+            }
+        };
+
+        const vpdStatusToSpanish = (status: string) => {
+            switch (status) {
+                case 'too_low': return 'demasiado bajo';
+                case 'low': return 'bajo';
+                case 'optimal': return 'óptimo';
+                case 'high': return 'alto';
+                case 'too_high': return 'demasiado alto';
+                default: return status;
+            }
+        };
+
+        const uri = process.env.analytics_ai_uri || 'http://localhost:8000';
+
+        const response = await fetch(`${uri}/analysis/latest?system_id=${systemId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+            return { message: 'No se pudo obtener el histórico desde el servicio de análisis' };
+        }
+
+        const data = await response.json();
+
+        const processed = (Array.isArray(data) ? data : [data]).map((item: any) => {
+            const out = { ...item };
+
+            out.system_name = SYSTEMS[`${systemId}`]?.name || out.system_name || system.name;
+
+            if (out.growth_stage) {
+                out.growth_stage = growthStageToSpanish(out.growth_stage);
+            }
+
+            if (out.environment && out.environment.vpd_status) {
+                out.environment = { ...out.environment, vpd_status: vpdStatusToSpanish(out.environment.vpd_status) };
+            }
+
+            return out;
+        });
+
+        if (processed.length === 0) return { message: 'No hay datos disponibles' };
+
+        return processed.length === 1 ? processed[0] : processed;
+    }
+
     private toPublicGrowingSystem(system: GrowingSystem): PublicGrowingSystem {
         return {
             systemId: system.systemId,
@@ -401,44 +484,202 @@ export class GrowingSystemService {
     }
     
     async getVariableHistory(systemId: number, variableId: number) {
+        // 1. validar sistema
+        const system = await this.growingSystemRepository.findOne({
+            where: { systemId },
+        });
 
-  // 1. validar sistema
-  const system = await this.growingSystemRepository.findOne({
-    where: { systemId },
-  });
+        if (!system) {
+            throw new NotFoundException('Growing system not found');
+        }
 
-  if (!system) {
-    throw new NotFoundException('Growing system not found');
-  }
+        // 2. validar relación sistema-variable
+        const systemVariable = await this.systemVariableRepository.findOne({
+            where: { system: { systemId }, variable: { variableId } },
+            relations: ['variable']
+        });
 
-  // 2. validar relación sistema-variable
-  const systemVariable = await this.systemVariableRepository.findOne({
-    where: {
-      systemId,
-      variableId,
-    },
-  });
+        if (!systemVariable) {
+            throw new NotFoundException('Variable not associated with this system');
+        }
 
-  if (!systemVariable) {
-    throw new NotFoundException('Variable not associated with this system');
-  }
+        // Mapeos locales (mezcla de datos proporcionados por el usuario)
+        const VARIABLES: Record<string, any> = {
+            "1": { variableId: "1", name: "Temperatura", measurementUnit: "°C", field: "environment.temperature_c" },
+            "2": { variableId: "2", name: "Humedad Relativa", measurementUnit: "%", field: "environment.rh_percent" },
+            "3": { variableId: "3", name: "Déficit de la presión de vapor", measurementUnit: "kPa", field: "environment.vpd_kpa" },
+            "4": { variableId: "4", name: "pH", measurementUnit: "pH", field: "sensors.ph" },
+            "5": { variableId: "5", name: "Conductividad Eléctrica", measurementUnit: "mS/cm", field: "sensors.ec_ms_cm" },
+            "6": { variableId: "6", name: "Oxígeno Disuelto", measurementUnit: "mg/L", field: "sensors.dissolved_o2" },
+            "7": { variableId: "7", name: "Nitrógeno", measurementUnit: "mmol/L", field: "concentrations.N" },
+            "8": { variableId: "8", name: "Fósforo", measurementUnit: "mmol/L", field: "concentrations.P" },
+            "9": { variableId: "9", name: "Potasio", measurementUnit: "mmol/L", field: "concentrations.K" },
+            "10": { variableId: "10", name: "Altura del cultivo", measurementUnit: "cm", field: "plant.root_length_cm" },
+        };
 
-  // 3. traer historial directamente (SIN hacks de sensorIds)
-  const readings = await this.sensorReadingRepository
-    .createQueryBuilder('reading')
-    .innerJoin('reading.sensor', 'sensor')
-    .innerJoin('sensor.variable', 'variable')
-    .innerJoin('sensor.device', 'device')
-    .where('device.system_id = :systemId', { systemId })
-    .andWhere('variable.variable_id = :variableId', { variableId })
-    .orderBy('reading.timestamp', 'ASC')
-    .getMany();
+        const SYSTEMS: Record<string, any> = {
+            "1": { systemId: "1", name: "Sistema de Lechugas NFT A", description: "Nutrient Film Technique system for lettuce cultivation" },
+            "2": { systemId: "2", name: "Sistema DWC B", description: "Deep Water Culture system for basil production" },
+            "3": { systemId: "3", name: "Flujo de fresas C", description: "Ebb and Flow system for strawberry cultivation" },
+        };
 
-  // 4. respuesta limpia
-  if (readings.length === 0) {
-    return { message: 'No hay datos disponibles' };
-  }
+        // Helpers de traducción para valores categóricos
+        const growthStageToSpanish = (stage: string) => {
+            switch (stage) {
+                case 'seedling': return 'plántula';
+                case 'vegetative': return 'vegetativo';
+                case 'mature': return 'maduro';
+                case 'harvest_ready': return 'listo para cosecha';
+                default: return stage;
+            }
+        };
 
-  return readings;
-}
+        const vpdStatusToSpanish = (status: string) => {
+            switch (status) {
+                case 'too_low': return 'demasiado bajo';
+                case 'low': return 'bajo';
+                case 'optimal': return 'óptimo';
+                case 'high': return 'alto';
+                case 'too_high': return 'demasiado alto';
+                default: return status;
+            }
+        };
+
+        // 3. llamar al servicio de análisis enviando datos relevantes (nombres en español)
+        const uri = process.env.analytics_ai_uri || 'http://localhost:8000';
+
+        // Enviar payload con nombres en español para que el servidor los tenga como contexto
+        const payload = {
+            system_id: systemId,
+            variable_id: variableId,
+            system_name: SYSTEMS[`${systemId}`]?.name || system.name,
+            variable_name: VARIABLES[`${variableId}`]?.name || (systemVariable.variable?.name || 'variable'),
+            variable_field: VARIABLES[`${variableId}`]?.field || null,
+        };
+
+        const response = await fetch(`${uri}/analysis/historical`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            // fallback: devolver mensaje amigable en español
+            return { message: 'No se pudo obtener el histórico desde el servicio de análisis' };
+        }
+
+        const data = await response.json();
+
+        // 4. procesar respuesta: traducir valores categóricos al español y asegurarnos que system_name esté en español
+        const processed = (Array.isArray(data) ? data : [data]).map((item: any) => {
+            // mantener claves en inglés, pero traducir valores textuales
+            const out = { ...item };
+
+            // system name
+            out.system_name = SYSTEMS[`${systemId}`]?.name || out.system_name || system.name;
+
+            // traducir growth_stage
+            if (out.growth_stage) {
+                out.growth_stage = growthStageToSpanish(out.growth_stage);
+            }
+
+            // traducir vpd status
+            if (out.environment && out.environment.vpd_status) {
+                out.environment = { ...out.environment, vpd_status: vpdStatusToSpanish(out.environment.vpd_status) };
+            }
+
+            // opcional: si se quiere, agregar metadata de variable en español
+            out.variable = out.variable || {};
+            out.variable.name_es = VARIABLES[`${variableId}`]?.name;
+            out.variable.unit_es = VARIABLES[`${variableId}`]?.measurementUnit;
+
+            return out;
+        });
+
+        if (processed.length === 0) return { message: 'No hay datos disponibles' };
+
+        return processed.length === 1 ? processed[0] : processed;
+    }
+
+    async getVariableHistoryAnalytics(
+        systemId: number,
+        variableId: number,
+        grouping: 'minutes' | 'hours' | 'days' | 'weeks' = 'hours',
+        start_date?: string,
+        end_date?: string
+    ) {
+        const system = await this.growingSystemRepository.findOne({ where: { systemId } });
+        if (!system) throw new NotFoundException('Growing system not found');
+
+        const VARIABLES: Record<string, any> = {
+            "1": { variableId: "1", name: "Temperatura", measurementUnit: "°C", field: "environment.temperature_c" },
+            "2": { variableId: "2", name: "Humedad Relativa", measurementUnit: "%", field: "environment.rh_percent" },
+            "3": { variableId: "3", name: "Déficit de la presión de vapor", measurementUnit: "kPa", field: "environment.vpd_kpa" },
+            "4": { variableId: "4", name: "pH", measurementUnit: "pH", field: "sensors.ph" },
+            "5": { variableId: "5", name: "Conductividad Eléctrica", measurementUnit: "mS/cm", field: "sensors.ec_ms_cm" },
+            "6": { variableId: "6", name: "Oxígeno Disuelto", measurementUnit: "mg/L", field: "sensors.dissolved_o2" },
+            "7": { variableId: "7", name: "Nitrógeno", measurementUnit: "mmol/L", field: "concentrations.N" },
+            "8": { variableId: "8", name: "Fósforo", measurementUnit: "mmol/L", field: "concentrations.P" },
+            "9": { variableId: "9", name: "Potasio", measurementUnit: "mmol/L", field: "concentrations.K" },
+            "10": { variableId: "10", name: "Altura del cultivo", measurementUnit: "cm", field: "plant.root_length_cm" },
+        };
+
+        const SYSTEMS: Record<string, any> = {
+            "1": { systemId: "1", name: "Sistema de Lechugas NFT A" },
+            "2": { systemId: "2", name: "Sistema DWC B" },
+            "3": { systemId: "3", name: "Flujo de fresas C" },
+        };
+
+        const growthStageToSpanish = (stage: string) => {
+            switch (stage) {
+                case 'seedling': return 'plántula';
+                case 'vegetative': return 'vegetativo';
+                case 'mature': return 'maduro';
+                case 'harvest_ready': return 'listo para cosecha';
+                default: return stage;
+            }
+        };
+
+        const vpdStatusToSpanish = (status: string) => {
+            switch (status) {
+                case 'too_low': return 'demasiado bajo';
+                case 'low': return 'bajo';
+                case 'optimal': return 'óptimo';
+                case 'high': return 'alto';
+                case 'too_high': return 'demasiado alto';
+                default: return status;
+            }
+        };
+
+        const uri = process.env.analytics_ai_uri || 'http://localhost:8000';
+
+        const params = new URLSearchParams();
+        params.set('system_id', `${systemId}`);
+        params.set('variable_id', `${variableId}`);
+        params.set('grouping', grouping);
+        if (start_date) params.set('start_date', start_date);
+        if (end_date) params.set('end_date', end_date);
+
+        const url = `${uri}/analysis/history?${params.toString()}`;
+
+        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        if (!response.ok) return { message: 'No se pudo obtener el histórico desde el servicio de análisis' };
+
+        const data = await response.json();
+
+        const processed = (Array.isArray(data) ? data : [data]).map((item: any) => {
+            const out = { ...item };
+            out.system_name = SYSTEMS[`${systemId}`]?.name || out.system_name || system.name;
+            if (out.growth_stage) out.growth_stage = growthStageToSpanish(out.growth_stage);
+            if (out.environment && out.environment.vpd_status) {
+                out.environment = { ...out.environment, vpd_status: vpdStatusToSpanish(out.environment.vpd_status) };
+            }
+            out.variable = out.variable || {};
+            out.variable.name_es = VARIABLES[`${variableId}`]?.name;
+            out.variable.unit_es = VARIABLES[`${variableId}`]?.measurementUnit;
+            return out;
+        });
+
+        return processed.length === 1 ? processed[0] : processed;
+    }
 }

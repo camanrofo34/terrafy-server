@@ -92,4 +92,22 @@ export class GrowingSystemController {
     ) {
         return await this.growingSystemService.getVariableHistory(systemId, variableId);
     }
+
+    @Get(':systemId/variables/:variableId/history/analytics')
+    @UseGuards(JwtAuthGuard)
+    async getVariableHistoryAnalytics(
+        @Param('systemId') systemId: number,
+        @Param('variableId') variableId: number,
+        @Query('grouping') grouping: 'minutes' | 'hours' | 'days' | 'weeks' = 'hours',
+        @Query('start_date') startDate?: string,
+        @Query('end_date') endDate?: string
+    ) {
+        return await this.growingSystemService.getVariableHistoryAnalytics(systemId, variableId, grouping, startDate, endDate);
+    }
+
+    @Get('/:systemId/latest')
+    @UseGuards(JwtAuthGuard)
+    async getLatestVariableValues(@Param('systemId') systemId: number) {
+        return await this.growingSystemService.getLatestVariableValues(systemId);
+    }
 }
