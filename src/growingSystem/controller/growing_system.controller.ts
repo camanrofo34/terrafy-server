@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
 import type { CreateGrowingSystemRequest } from "../model/dto/request/CreateGrowingSystemRequest.types";
 import { GrowingSystemService } from "../services/growing_system.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -100,9 +100,40 @@ export class GrowingSystemController {
         @Param('variableId') variableId: number,
         @Query('grouping') grouping: 'minutes' | 'hours' | 'days' | 'weeks' = 'hours',
         @Query('start_date') startDate?: string,
-        @Query('end_date') endDate?: string
+        @Query('end_date') endDate?: string,
+        @Query('format') format?: 'excel' | 'csv',
+        @Res({ passthrough: true }) res?: any,
     ) {
-        return await this.growingSystemService.getVariableHistoryAnalytics(systemId, variableId, grouping, startDate, endDate);
+        const result = await this.growingSystemService.getVariableHistoryAnalytics(systemId, variableId, grouping, startDate, endDate, format as any);
+        if (result && (result as any).isFile) {
+            const r = result as any;
+            if (r.contentType) res.setHeader('Content-Type', r.contentType);
+            if (r.filename) res.setHeader('Content-Disposition', `attachment; filename="${r.filename}"`);
+            if (r.buffer && r.buffer.length) res.setHeader('Content-Length', r.buffer.length.toString());
+            return r.buffer;
+        }
+        return result;
+    }
+
+    @Get(':systemId/history/analytics')
+    @UseGuards(JwtAuthGuard)
+    async getSystemHistoryAnalytics(
+        @Param('systemId') systemId: number,
+        @Query('grouping') grouping: 'minutes' | 'hours' | 'days' | 'weeks' = 'hours',
+        @Query('start_date') startDate?: string,
+        @Query('end_date') endDate?: string,
+        @Query('format') format?: 'excel' | 'csv',
+        @Res({ passthrough: true }) res?: any,
+    ) {
+        const result = await this.growingSystemService.getSystemHistoryAnalytics(systemId, grouping, startDate, endDate, format as any);
+        if (result && (result as any).isFile) {
+            const r = result as any;
+            if (r.contentType) res.setHeader('Content-Type', r.contentType);
+            if (r.filename) res.setHeader('Content-Disposition', `attachment; filename="${r.filename}"`);
+            if (r.buffer && r.buffer.length) res.setHeader('Content-Length', r.buffer.length.toString());
+            return r.buffer;
+        }
+        return result;
     }
 
     @Get('/:systemId/latest')

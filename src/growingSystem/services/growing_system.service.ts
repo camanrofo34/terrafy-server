@@ -484,7 +484,6 @@ export class GrowingSystemService {
     }
     
     async getVariableHistory(systemId: number, variableId: number) {
-        // 1. validar sistema
         const system = await this.growingSystemRepository.findOne({
             where: { systemId },
         });
@@ -493,7 +492,6 @@ export class GrowingSystemService {
             throw new NotFoundException('Growing system not found');
         }
 
-        // 2. validar relación sistema-variable
         const systemVariable = await this.systemVariableRepository.findOne({
             where: { system: { systemId }, variable: { variableId } },
             relations: ['variable']
@@ -503,7 +501,6 @@ export class GrowingSystemService {
             throw new NotFoundException('Variable not associated with this system');
         }
 
-        // Mapeos locales (mezcla de datos proporcionados por el usuario)
         const VARIABLES: Record<string, any> = {
             "1": { variableId: "1", name: "Temperatura", measurementUnit: "°C", field: "environment.temperature_c" },
             "2": { variableId: "2", name: "Humedad Relativa", measurementUnit: "%", field: "environment.rh_percent" },
@@ -523,7 +520,6 @@ export class GrowingSystemService {
             "3": { systemId: "3", name: "Flujo de fresas C", description: "Ebb and Flow system for strawberry cultivation" },
         };
 
-        // Helpers de traducción para valores categóricos
         const growthStageToSpanish = (stage: string) => {
             switch (stage) {
                 case 'seedling': return 'plántula';
@@ -545,10 +541,8 @@ export class GrowingSystemService {
             }
         };
 
-        // 3. llamar al servicio de análisis enviando datos relevantes (nombres en español)
         const uri = process.env.analytics_ai_uri || 'http://localhost:8000';
 
-        // Enviar payload con nombres en español para que el servidor los tenga como contexto
         const payload = {
             system_id: systemId,
             variable_id: variableId,
@@ -564,31 +558,24 @@ export class GrowingSystemService {
         });
 
         if (!response.ok) {
-            // fallback: devolver mensaje amigable en español
             return { message: 'No se pudo obtener el histórico desde el servicio de análisis' };
         }
 
         const data = await response.json();
 
-        // 4. procesar respuesta: traducir valores categóricos al español y asegurarnos que system_name esté en español
         const processed = (Array.isArray(data) ? data : [data]).map((item: any) => {
-            // mantener claves en inglés, pero traducir valores textuales
             const out = { ...item };
 
-            // system name
             out.system_name = SYSTEMS[`${systemId}`]?.name || out.system_name || system.name;
 
-            // traducir growth_stage
             if (out.growth_stage) {
                 out.growth_stage = growthStageToSpanish(out.growth_stage);
             }
 
-            // traducir vpd status
             if (out.environment && out.environment.vpd_status) {
                 out.environment = { ...out.environment, vpd_status: vpdStatusToSpanish(out.environment.vpd_status) };
             }
 
-            // opcional: si se quiere, agregar metadata de variable en español
             out.variable = out.variable || {};
             out.variable.name_es = VARIABLES[`${variableId}`]?.name;
             out.variable.unit_es = VARIABLES[`${variableId}`]?.measurementUnit;
@@ -606,7 +593,8 @@ export class GrowingSystemService {
         variableId: number,
         grouping: 'minutes' | 'hours' | 'days' | 'weeks' = 'hours',
         start_date?: string,
-        end_date?: string
+        end_date?: string,
+        format?: 'excel' | 'csv'
     ) {
         const system = await this.growingSystemRepository.findOne({ where: { systemId } });
         if (!system) throw new NotFoundException('Growing system not found');
@@ -657,13 +645,27 @@ export class GrowingSystemService {
         params.set('system_id', `${systemId}`);
         params.set('variable_id', `${variableId}`);
         params.set('grouping', grouping);
+        if (format) params.set('formato', format);
         if (start_date) params.set('start_date', start_date);
         if (end_date) params.set('end_date', end_date);
 
         const url = `${uri}/analysis/history?${params.toString()}`;
 
-        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        const response = await fetch(url, { method: 'GET' });
         if (!response.ok) return { message: 'No se pudo obtener el histórico desde el servicio de análisis' };
+
+        const contentType = response.headers.get('content-type') || '';
+        const contentDisp = response.headers.get('content-disposition') || '';
+
+        // If it's a file (non-json) return buffer with metadata so controller can stream it
+        if (!contentType.includes('application/json')) {
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            let filename: string | undefined;
+            const m = contentDisp.match(/filename\*=UTF-8''([^;\n\r]+)/) || contentDisp.match(/filename="?([^";]+)"?/);
+            if (m) filename = decodeURIComponent(m[1]);
+            return { isFile: true, buffer, contentType, filename };
+        }
 
         const data = await response.json();
 
@@ -681,5 +683,55 @@ export class GrowingSystemService {
         });
 
         return processed.length === 1 ? processed[0] : processed;
+    }
+
+    async getSystemHistoryAnalytics(
+        systemId: number,
+        grouping: 'minutes' | 'hours' | 'days' | 'weeks' = 'hours',
+        start_date?: string,
+        end_date?: string,
+        format?: 'excel' | 'csv'
+    ) {
+        const system = await this.growingSystemRepository.findOne({ where: { systemId } });
+        if (!system) throw new NotFoundException('Growing system not found');
+
+        const uri = process.env.analytics_ai_uri || 'http://localhost:8000';
+
+        const params = new URLSearchParams();
+        params.set('grouping', grouping);
+        if (start_date) params.set('start_date', start_date);
+        if (end_date) params.set('end_date', end_date);
+        if (format) params.set('formato', format);
+
+        const url = `${uri}/analysis/history/${systemId}?${params.toString()}`;
+
+        const response = await fetch(url, { method: 'GET' });
+        if (!response.ok) return { message: 'No se pudo obtener el histórico desde el servicio de análisis' };
+
+        const contentType = response.headers.get('content-type') || '';
+        const contentDisp = response.headers.get('content-disposition') || '';
+
+        if (!contentType.includes('application/json')) {
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            let filename: string | undefined;
+            const m = contentDisp.match(/filename\*=UTF-8''([^;\n\r]+)/) || contentDisp.match(/filename="?([^";]+)"?/);
+            if (m) filename = decodeURIComponent(m[1]);
+            return { isFile: true, buffer, contentType, filename };
+        }
+
+        const data = await response.json();
+
+        const SYSTEMS: Record<string, any> = {
+            "1": { systemId: "1", name: "Sistema de Lechugas NFT A" },
+            "2": { systemId: "2", name: "Sistema DWC B" },
+            "3": { systemId: "3", name: "Flujo de fresas C" },
+        };
+
+        if (data && typeof data === 'object') {
+            if (!data.system_name) data.system_name = SYSTEMS[`${systemId}`]?.name || system.name;
+        }
+
+        return data;
     }
 }
