@@ -136,6 +136,17 @@ export class GrowingSystemController {
         return result;
     }
 
+    @Get(':systemId/alerts')
+    @UseGuards(JwtAuthGuard)
+    async getSystemAlerts(
+        @Param('systemId') systemId: number,
+        @Query('variable_id') variableId?: number,
+        @Query('start_date') startDate?: string,
+        @Query('end_date') endDate?: string,
+    ) {
+        return await this.growingSystemService.getAlerts(systemId, variableId as any, startDate, endDate);
+    }
+
     @Get('/:systemId/latest')
     @UseGuards(JwtAuthGuard)
     async getLatestVariableValues(@Param('systemId') systemId: number) {

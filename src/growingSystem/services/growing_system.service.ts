@@ -734,4 +734,67 @@ export class GrowingSystemService {
 
         return data;
     }
+
+    async getAlerts(
+        systemId: number,
+        variableId?: number,
+        start_date?: string,
+        end_date?: string
+    ) {
+        const system = await this.growingSystemRepository.findOne({ where: { systemId } });
+        if (!system) throw new NotFoundException('Growing system not found');
+
+        const VARIABLES: Record<string, any> = {
+            "1": { variableId: "1", name: "Temperatura", measurementUnit: "°C", field: "environment.temperature_c" },
+            "2": { variableId: "2", name: "Humedad Relativa", measurementUnit: "%", field: "environment.rh_percent" },
+            "3": { variableId: "3", name: "Déficit de la presión de vapor", measurementUnit: "kPa", field: "environment.vpd_kpa" },
+            "4": { variableId: "4", name: "pH", measurementUnit: "pH", field: "sensors.ph" },
+            "5": { variableId: "5", name: "Conductividad Eléctrica", measurementUnit: "mS/cm", field: "sensors.ec_ms_cm" },
+            "6": { variableId: "6", name: "Oxígeno Disuelto", measurementUnit: "mg/L", field: "sensors.dissolved_o2" },
+            "7": { variableId: "7", name: "Nitrógeno", measurementUnit: "mmol/L", field: "concentrations.N" },
+            "8": { variableId: "8", name: "Fósforo", measurementUnit: "mmol/L", field: "concentrations.P" },
+            "9": { variableId: "9", name: "Potasio", measurementUnit: "mmol/L", field: "concentrations.K" },
+            "10": { variableId: "10", name: "Altura del cultivo", measurementUnit: "cm", field: "plant.root_length_cm" },
+        };
+
+        const SYSTEMS: Record<string, any> = {
+            "1": { systemId: "1", name: "Sistema de Lechugas NFT A" },
+            "2": { systemId: "2", name: "Sistema DWC B" },
+            "3": { systemId: "3", name: "Flujo de fresas C" },
+        };
+
+        const uri = process.env.analytics_ai_uri || 'http://localhost:8000';
+
+        const params = new URLSearchParams();
+        params.set('system_id', `${systemId}`);
+        if (variableId) params.set('variable_id', `${variableId}`);
+        if (start_date) params.set('start_date', start_date);
+        if (end_date) params.set('end_date', end_date);
+
+        const url = `${uri}/analysis/alerts?${params.toString()}`;
+
+        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        if (!response.ok) return { message: 'No se pudo obtener las alertas desde el servicio de análisis' };
+
+        const data = await response.json();
+
+        // Enrich response: ensure system_name and variable names/units
+        if (data && typeof data === 'object') {
+            if (!data.system_name) data.system_name = SYSTEMS[`${systemId}`]?.name || system.name;
+            if (Array.isArray(data.alerts)) {
+                data.alerts = data.alerts.map((a: any) => {
+                    const out = { ...a };
+                    if (out.variable_id && !out.variable_name) {
+                        out.variable_name = VARIABLES[`${out.variable_id}`]?.name || out.variable_name;
+                    }
+                    if (out.variable_id && !out.unit) {
+                        out.unit = VARIABLES[`${out.variable_id}`]?.measurementUnit || out.unit;
+                    }
+                    return out;
+                });
+            }
+        }
+
+        return data;
+    }
 }
