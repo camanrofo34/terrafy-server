@@ -96,3 +96,37 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## GitHub CI/CD to Azure Container Apps
+
+This repository includes a workflow at `.github/workflows/azure-containerapp-cicd.yml`.
+
+### What it does
+
+- Builds the NestJS app (`npm ci` + `npm run build`)
+- Builds and pushes a Docker image to your container registry
+- Deploys the new image to your existing Azure Container App
+
+### Trigger
+
+- Push to `main`
+- Manual run from GitHub Actions (`workflow_dispatch`)
+
+### Required GitHub Secrets
+
+- `REGISTRY_USERNAME`: registry username/service principal
+- `REGISTRY_PASSWORD`: registry password/secret
+- `AZURE_CLIENT_ID`: Azure federated app/client id (OIDC)
+- `AZURE_TENANT_ID`: Azure tenant id
+- `AZURE_SUBSCRIPTION_ID`: Azure subscription id
+
+### Required GitHub Variables
+
+- `REGISTRY_LOGIN_SERVER`: e.g. `myregistry.azurecr.io`
+- `IMAGE_NAME`: e.g. `terrafy-server`
+- `AZURE_RESOURCE_GROUP`: resource group where the Container App exists
+- `AZURE_CONTAINER_APP_NAME`: existing Container App name
+
+### Optional GitHub Variable
+
+- `AZURE_CONTAINER_NAME`: only needed if your Container App template has multiple containers and you want to target one explicitly.
