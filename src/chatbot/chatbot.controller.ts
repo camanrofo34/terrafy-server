@@ -1,16 +1,19 @@
-import { Body, HttpCode, Post, Req, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { Body, Controller, HttpCode, Post } from "@nestjs/common";
 
-export default class ChatbotController {
+@Controller('api/ai')
+export class ChatbotController {
 
-    constructor(
-        private readonly chatbotService: any
-    ){}
+    constructor() {}
 
-    @Post('/message')
-    @UseGuards(JwtAuthGuard)
+    @Post('/chat')
     @HttpCode(200)
-    async sendMessage(@Req() req: Request, @Body() payload: any) {
-        return await this.chatbotService.sendMessage(payload, (req as any).user);
+    async sendMessage( @Body() payload: {message: string, system_id: string}) {
+        return await fetch('http://localhost:8000/ai/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        }).then(res => res.json());
     }
 }

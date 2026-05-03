@@ -28,6 +28,7 @@ import { SensorReadingService } from './sensorReading/services/sensor-reading.se
 import { SensorReadingController } from './sensorReading/controller/sensor-reading.controller';
 import { AlertService } from './alert/services/alert.service';
 import { AlertController } from './alert/controller/alert.controller';
+import { ChatbotController } from './chatbot/chatbot.controller';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { AlertController } from './alert/controller/alert.controller';
     SensorController,
     SensorReadingController,
     AlertController,
+    ChatbotController,
   ],
   providers: [
     UsersService,
